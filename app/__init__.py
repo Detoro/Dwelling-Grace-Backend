@@ -1,11 +1,12 @@
 import logging
-
 from flask import Flask, jsonify
+from flask_mail import Mail
 from flask_cors import CORS
-
 from app.config import Config, validate_config
 from app.orders import init_db
-
+from app.routes.checkout import bp as checkout_bp
+from app.routes.newsletter import bp as newsletter_bp
+from app.routes.products import bp as products_bp
 
 def create_app(test_config=None) -> Flask:
     app = Flask(__name__)
@@ -13,7 +14,9 @@ def create_app(test_config=None) -> Flask:
     if test_config:
         app.config.update(test_config)
 
-    CORS(app, resources={r"/api/*": {"origins": app.config["FRONTEND_URL"]}})
+    frontend = app.config["FRONTEND_URL"].rstrip("/")
+    origins = [frontend, "http://localhost:5173", "http://127.0.0.1:5173"]
+    CORS(app, resources={r"/api/*": {"origins": origins}})
 
     db_uri = app.config.get("DATABASE_URL") or app.config.get("DATABASE_PATH", "orders.db")
     init_db(db_uri)
@@ -22,9 +25,7 @@ def create_app(test_config=None) -> Flask:
         app.logger.warning(warning)
     logging.basicConfig(level=logging.INFO)
 
-    from app.routes.checkout import bp as checkout_bp
-    from app.routes.newsletter import bp as newsletter_bp
-    from app.routes.products import bp as products_bp
+    Mail(app)
 
     app.register_blueprint(products_bp)
     app.register_blueprint(checkout_bp)

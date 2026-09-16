@@ -3,6 +3,7 @@ import stripe
 from flask import Blueprint, current_app, jsonify, request
 from app import orders
 from app.data import catalog_pricing, designer_pricing
+from app.email import send_order_confirmation
 
 bp = Blueprint("checkout", __name__, url_prefix="/api/checkout")
 
@@ -14,29 +15,11 @@ class CheckoutError(ValueError):
 
 
 def _price_line(raw_line: dict, db_uri: str | None = None) -> dict:
-    """
-    Turns one client-submitted line into { name, image, quantity, unit_price, selections }.
-    This is the only place prices are decided — raw_line.unitPrice (if the
-    client even sent one) is never read.
-    """
     product_id = raw_line.get("productId")
     quantity = raw_line.get("quantity")
 
     if not isinstance(quantity, int) or quantity < 1 or quantity > 20:
         raise CheckoutError(f"Invalid quantity for line: {quantity!r}")
-
-    if product_id == "custom-pillow":
-        config = raw_line.get("designerConfig") or {}
-        try:
-            unit_price = designer_pricing.compute_pillow_price(config)
-            selections = designer_pricing.pillow_selection_summary(config)
-        except (KeyError, designer_pricing.InvalidOptionError) as exc:
-            raise CheckoutError(f"Invalid custom pillow configuration: {exc}") from exc
-        name = "Custom Pillow"
-        if config.get("monogram"):
-            name += f" (monogram: {str(config['monogram'])[:3].upper()})"
-        return {"name": name, "image": "/placeholder-pillow.svg", "quantity": quantity,
-                "unit_price": unit_price, "selections": selections}
 
     if product_id == "custom-case":
         config = raw_line.get("designerConfig") or {}
@@ -161,6 +144,14 @@ def webhook():
                 total=existing["total"],
                 lines=existing["lines"],
             )
+
+            if email:
+                send_order_confirmation(
+                    recipient=email,
+                    order_id=existing["orderId"],
+                    total=existing["total"],
+                    lines=existing["lines"],
+                )
 
     return jsonify({"received": True})
 

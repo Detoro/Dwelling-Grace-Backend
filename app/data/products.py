@@ -1,17 +1,3 @@
-"""
-Product catalog.
-
-This is the server's source of truth for prices — the frontend's copy
-(fetched via GET /products) is for display only. Every checkout line is
-re-priced from here (or from designer_pricing.py for custom items),
-never trusted from the client.
-
-In a real deployment this would live in a database; a plain Python
-module is enough for a small, hand-curated catalog like this one and
-keeps the whole backend runnable with zero external services besides
-Stripe.
-"""
-
 PRODUCTS = [
     {
         "id": "prod-pillow-hearth",
@@ -79,15 +65,6 @@ PRODUCTS = [
                     {"id": "linen-oat", "label": "Oat Linen", "priceDelta": 0, "swatchHex": "#D8CCB4"},
                     {"id": "linen-clay", "label": "Clay Linen", "priceDelta": 0, "swatchHex": "#B97D5D"},
                     {"id": "velvet-wine", "label": "Wine Velvet", "priceDelta": 2200, "swatchHex": "#5C1F2E"},
-                ],
-            },
-            {
-                "id": "piping",
-                "label": "Piping",
-                "required": False,
-                "options": [
-                    {"id": "piping-none", "label": "No piping", "priceDelta": 0},
-                    {"id": "piping-contrast", "label": "Contrast piping", "priceDelta": 1400, "swatchHex": "#C7A24C"},
                 ],
             },
         ],

@@ -26,12 +26,19 @@ class Config:
     DATABASE_PATH = os.environ.get("DATABASE_PATH", "orders.db")
     SECRET_KEY = os.environ.get("DATABASE_KEY", "dev")
 
+    MAIL_SERVER = os.environ.get("MAIL_SERVER", "smtp.example.com")
+    MAIL_PORT = int(os.environ.get("MAIL_PORT", 587))
+    MAIL_USE_TLS = os.environ.get("MAIL_USE_TLS", "true").lower() in ["true", "1", "t"]
+    MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+    MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+    MAIL_DEFAULT_SENDER = os.environ.get("MAIL_DEFAULT_SENDER", "")
 
 def validate_config(config: Config) -> list[str]:
-    """Returns a list of human-readable warnings for missing required settings."""
     warnings = []
     if not config.STRIPE_SECRET_KEY:
         warnings.append("STRIPE_SECRET_KEY is not set — checkout will fail until it is.")
     if not config.STRIPE_WEBHOOK_SECRET:
         warnings.append("STRIPE_WEBHOOK_SECRET is not set — orders won't be recorded after payment.")
+    if not config.MAIL_USERNAME or not config.MAIL_DEFAULT_SENDER:
+        warnings.append("MAIL_USERNAME or MAIL_DEFAULT_SENDER is not set — transactional emails will not be sent.")
     return warnings

@@ -1,6 +1,7 @@
 from flask import Blueprint, current_app, jsonify, request
 
 from app import orders
+from app.email import send_newsletter_subcription
 
 bp = Blueprint("newsletter", __name__, url_prefix="/api/newsletter")
 
@@ -18,11 +19,11 @@ def subscribe():
         return jsonify({"error": "A valid email address is required."}), 400
 
     try:
-        orders.subscribe_newsletter(_db_uri(), email.strip())
+        if (orders.subscribe_newsletter(_db_uri(), email.strip())):
+            send_newsletter_subcription(email.strip().lower())
         return jsonify({"status": "subscribed", "email": email.strip().lower()}), 200
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
     except Exception as exc:
         current_app.logger.error(f"Newsletter subscription error: {exc}")
         return jsonify({"error": "Could not subscribe at this time. Please try again later."}), 500
-
